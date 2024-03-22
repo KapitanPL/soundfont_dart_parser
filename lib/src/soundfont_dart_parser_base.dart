@@ -1,8 +1,11 @@
 import 'dart:io';
 
+import 'package:soundfont_dart_parser/src/soundfont_types/sf_base_class.dart';
+import 'package:soundfont_dart_parser/src/soundfont_types/sf_preset_header.dart';
+
 import './file_chunker/file_chunker.dart';
 import './segment_id_map.dart';
-import './soundfont_specific_classes.dart';
+import 'soundfont_types.dart';
 import 'utils.dart';
 
 /// Function called on the RIFF segment.
@@ -12,18 +15,19 @@ import 'utils.dart';
 /// if [true] is returned nothing else inside is parsed
 typedef SegmentLeafParser = Future<bool> Function(SegmentIdMap);
 
-// TODO: Put public facing types in this file.
-
 class SoundFontParser {
+  // mostly internal variables
   String filename;
   late FileChunker _chunker;
   late SegmentIdMap segments;
-
   late final Map<String, SegmentLeafParser> leafSegmentParsers;
 
+  // users might be interested in this
   Version? version;
   Version? romVersion;
   final Map<String, String> infoStrings = {};
+  List<SFPresetHeader>? presetHeaders;
+  List<SFInstrument>? instrumentList;
 
   SoundFontParser(this.filename,
       {Map<String, SegmentLeafParser>? customSegmentParsers,
@@ -51,6 +55,8 @@ class SoundFontParser {
       'ICOP': (SegmentIdMap segment) => _parseLeaf_string(segment, 'ICOP'),
       'ICMT': (SegmentIdMap segment) => _parseLeaf_string(segment, 'ICMT'),
       'ISFT': (SegmentIdMap segment) => _parseLeaf_string(segment, 'ISFT'),
+      'phdr': _parseLeaf_phdr,
+      'inst': _parseLeaf_inst,
     };
   }
 
@@ -98,17 +104,16 @@ class SoundFontParser {
 
   Future<void> _parseSegment(SegmentIdMap segment) async {
     if (segment.parsed == false) {
-      String segmentName = segment.name;
+      /*String segmentName = segment.name;
       var parent = segment.parent;
       while (parent != null) {
-        var parentName = parent.name;
         if (parent.name == "LIST") {
           parent.name = parent.name + '-' + parent.tag;
         }
         segmentName = parent.name + ':' + segmentName;
         parent = parent.parent;
       }
-      print("Parsing $segmentName");
+      print("Parsing $segmentName");*/
       if (await _parseLeafSegment(segment)) {
         return;
       }
@@ -167,6 +172,49 @@ class SoundFontParser {
       final data = await _chunker.readData(segment.offset + 8, segment.size);
       infoStrings[keyWord] = Utils.stringFromChunkData(data, 0, segment.size);
       segment.parsed = true;
+      return true;
+    }
+    return false;
+  }
+
+  List<T>? _parseDataWithSfClass<T>(List<int> data, T Function() createNew) {
+    final dummy = createNew();
+    if (dummy is SFBase) {
+      final structSize = dummy.structSize();
+      if (data.length % structSize != 0) {
+        throw FormatException('Wrong phdr segment data size');
+      }
+      final structNum = data.length ~/ structSize;
+      List<T> res = [];
+      for (var i = 0; i < structNum; ++i) {
+        final newStruct = createNew();
+        (newStruct as SFBase)
+            .initFromData(data.sublist(i * structSize, (i + 1) * structSize));
+        res.add(newStruct);
+      }
+      return res;
+    }
+    return null;
+  }
+
+  Future<bool> _parseLeaf_phdr(SegmentIdMap segment) async {
+    if (segment.name == 'phdr') {
+      final data = await _chunker.readData(segment.offset + 8, segment.size);
+      presetHeaders =
+          _parseDataWithSfClass<SFPresetHeader>(data, () => SFPresetHeader());
+      segment.parsed = true;
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> _parseLeaf_inst(SegmentIdMap segment) async {
+    if (segment.name == 'inst') {
+      final data = await _chunker.readData(segment.offset + 8, segment.size);
+      instrumentList =
+          _parseDataWithSfClass<SFInstrument>(data, () => SFInstrument());
+      segment.parsed = true;
+      return true;
     }
     return false;
   }

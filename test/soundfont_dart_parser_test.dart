@@ -17,6 +17,18 @@ void main() {
       expect(parser.infoStrings['isng'], 'EMU8000');
       expect(parser.infoStrings['INAM'], 'Soccer Shootout Soundfont');
       expect(parser.infoStrings['ISFT'], 'Polyphone');
+
+      expect(parser.presetHeaders!.length, 4);
+      expect(parser.presetHeaders![0].presetName, 'Wave');
+      expect(parser.presetHeaders![1].presetName, 'Kick');
+      expect(parser.presetHeaders![2].presetName, '19');
+      expect(parser.presetHeaders![3].presetName, 'EOP');
+
+      expect(parser.instrumentList!.length, 4);
+      expect(parser.instrumentList![0].instrumentName, 'Wave');
+      expect(parser.instrumentList![1].instrumentName, 'Kick');
+      expect(parser.instrumentList![2].instrumentName, '19');
+      expect(parser.instrumentList![3].instrumentName, 'EOI');
     });
   });
 }
