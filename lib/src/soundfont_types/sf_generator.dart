@@ -3,7 +3,7 @@ import '../utils.dart';
 class SFGenerator {
   // TODO not sure about the structure from doc, so far just a copy of SFModulator
   // it should be 2 bytes
-  int _value;
+  final int _value;
 
   SFGenerator(this._value);
 

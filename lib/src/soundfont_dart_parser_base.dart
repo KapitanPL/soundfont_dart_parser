@@ -112,16 +112,21 @@ class SoundFontParser {
   Future<void> _parseSegment(SegmentIdMap segment) async {
     if (_break) return;
     if (segment.parsed == false) {
-      String segmentName = segment.name;
-      var parent = segment.parent;
-      while (parent != null) {
-        if (parent.name == "LIST") {
-          parent.name = parent.name + '-' + parent.tag;
+      bool isDebug = false;
+      // the assert is called only in debug
+      assert((isDebug = true));
+      if (isDebug) {
+        String segmentName = segment.name;
+        var parent = segment.parent;
+        while (parent != null) {
+          if (parent.name == "LIST") {
+            parent.name = '${parent.name}-${parent.tag}';
+          }
+          segmentName = '${parent.name}:$segmentName';
+          parent = parent.parent;
         }
-        segmentName = parent.name + ':' + segmentName;
-        parent = parent.parent;
+        print("Parsing $segmentName");
       }
-      print("Parsing $segmentName");
       if (await _parseLeafSegment(segment)) {
         return;
       }
