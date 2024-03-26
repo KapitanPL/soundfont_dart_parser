@@ -21,6 +21,7 @@ class SoundFontParser {
   late FileChunker _chunker;
   late SegmentIdMap segments;
   late final Map<String, SegmentLeafParser> leafSegmentParsers;
+  bool _break = false;
 
   // users might be interested in this
   Version? version;
@@ -60,7 +61,12 @@ class SoundFontParser {
     };
   }
 
+  void cancelInit() {
+    _break = true;
+  }
+
   Future<void> init() async {
+    _break = false;
     _chunker = FileChunker(filePath: filename);
     List<int> chunk = await _chunker.readData(0, 12);
     if (chunk.isNotEmpty) {
@@ -93,6 +99,7 @@ class SoundFontParser {
   // special depth = -1 parse all segments as far as possible
   Future<void> _parseSegmentRecurse(SegmentIdMap segment,
       {int depth = 0}) async {
+    if (_break) return;
     await _parseSegment(segment);
     if (depth > 0 || depth == -1) {
       for (final subSegment in segment.segments) {
@@ -103,8 +110,9 @@ class SoundFontParser {
   }
 
   Future<void> _parseSegment(SegmentIdMap segment) async {
+    if (_break) return;
     if (segment.parsed == false) {
-      /*String segmentName = segment.name;
+      String segmentName = segment.name;
       var parent = segment.parent;
       while (parent != null) {
         if (parent.name == "LIST") {
@@ -113,7 +121,7 @@ class SoundFontParser {
         segmentName = parent.name + ':' + segmentName;
         parent = parent.parent;
       }
-      print("Parsing $segmentName");*/
+      print("Parsing $segmentName");
       if (await _parseLeafSegment(segment)) {
         return;
       }
@@ -141,7 +149,9 @@ class SoundFontParser {
   }
 
   Future<bool> _parseLeafSegment(SegmentIdMap segment) async {
+    if (_break) return false;
     if (leafSegmentParsers.keys.contains(segment.name)) {
+      print('parsing leaf ${segment.name}');
       return await leafSegmentParsers[segment.name]!.call(segment);
     }
     return false;
@@ -187,6 +197,7 @@ class SoundFontParser {
       final structNum = data.length ~/ structSize;
       List<T> res = [];
       for (var i = 0; i < structNum; ++i) {
+        if (_break) return null;
         final newStruct = createNew();
         (newStruct as SFBase)
             .initFromData(data.sublist(i * structSize, (i + 1) * structSize));

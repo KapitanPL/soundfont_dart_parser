@@ -8,6 +8,6 @@
             "name": "soundfont_dart_parser",
             "request": "launch",
             "type": "dart"
-        }
+        },
     ]
 }

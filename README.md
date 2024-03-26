@@ -1,27 +1,29 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Soundfont parser
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+This package is aimed to add support for sf2 (soundfont) binary files. Those files are used as databanks for sound applications such as musical instruments, for games... 
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+Originally this package was meant only to be able to provide list of instruments/presets stored in file to be accessed by other packages. 
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+If there is a need for adding more parsing capabilities, just contact me at kapitanpaplod@gmail.com
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+So far is the package meant only as passive parser. To parse soundFont file to access some informations.
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Add as dependency to your pubspec.yaml
+
+```yaml
+dependencies:
+    soundfont_dart_parser: ^latest
+```
+
+and import using
+
+```dart
+import 'package:soundfont_dart_parser/soundfont_dart_parser.dart';
+```
 
 ## Usage
 
@@ -29,11 +31,22 @@ TODO: Include short and useful examples for package users. Add longer examples
 to `/example` folder. 
 
 ```dart
-const like = 'sample';
+FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+        final soundFontParser = SoundFontParser(result.files.first.path!);
+        await soundFontParser.init(); // actually parses the font. Async function so it is possible to load in background
+    }
+```
+
+and then just access the information:
+```dart
+for(final instrument in soundfontParser.instrumentList)
+{
+    <do something interesting>
+}
 ```
 
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+I hope I will slowly add more functionality. On the other hand I created this package just because I needed a list of instruments in a sf2 file.
