@@ -3,7 +3,7 @@ description: Dart parser of binary SoundFont (sf2) files (uncomplete)
 # This project aims to add support for loading and parsing binary sf2 files
 # 
 # There already are midi players that can load sf2 file, but usually they lack the iformation about instruments
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/KapitanPL/soundfont_dart_parser
 
 environment:
